@@ -12,6 +12,7 @@ package assign_4;
 //import java.io.FileOutputStream;
 //import java.io.FileInputStream;
 import base.compressor;
+
 import java.io.*;
 import java.util.BitSet;
 import java.util.PriorityQueue;
@@ -51,16 +52,6 @@ class Node implements Comparable<Node>{
 	public HufmannEncoderDecoder()
 	{
 		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void Compress(String[] input_names, String[] output_names) throws IOException
-	{
-		byte[] b=CompressWithArray(input_names, output_names);
-	}
-	public void Decompress(String[] input_names, String[] output_names) throws IOException
-	{
-		byte[] b=DecompressWithArray(input_names, output_names);
 	}
 	public byte[] CompressWithArray(String[] input_names, String[] output_names) throws IOException
 	{
@@ -240,4 +231,16 @@ class Node implements Comparable<Node>{
 		BuildTree(root.left, bits,k);
 		BuildTree(root.right, bits,k);
 		}
+	@Override
+	public void Compress(String[] input_names, String[] output_names)
+			throws FileNotFoundException, IOException {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void Decompress(String[] input_names, String[] output_names)
+			throws FileNotFoundException, IOException {
+		// TODO Auto-generated method stub
+		
+	}
 }

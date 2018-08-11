@@ -1,95 +1,77 @@
 package assign_4;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.BitSet;
-
 import javax.imageio.ImageIO;
-
-import com.sun.javafx.image.PixelAccessor;
 
 public class PngLossyEncoderDecoder {
 public PngLossyEncoderDecoder() {
 	// TODO Auto-generated constructor stub
 }
 public void Compress(String src,int LevelSelected) throws IOException{
-	double minEntropy = 0,Entropyprev=0,Entropytop=0,Entropyave=0,EntropyaveLossy=0,Entropymid=0,EntropymidLossy=0,Entropydefult=0,EntropyprevLossy=0,EntropytopLossy=0;
+	double minEntropy = 0,Entropyprev=0,Entropytop=0,Entropyave=0,EntropyaveLossy=0,Entropymid=0,EntropymidLossy=0,EntropyprevLossy=0,EntropytopLossy=0;
 	BufferedImage imgBuffer = ImageIO.read(new File(src));
 	File file=new File(src);
 	 InputStream input = new FileInputStream(file);
 	 byte[] bytes=new byte[(int) file.length()];
-	 input.read(bytes, 0,bytes.length);
-	 byte[][]pxtop = new byte[2][imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxprev = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxprevnew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxtopnew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxavenew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxmidnew= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxprevnewL = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxtopnewL = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxavenewL= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		byte[] pxmidnewL= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
-		int [] colorpx=new int[256];
-		int [] colorpxtotal=new int [256];
-	 ///Entropytop=PngTop(src, pxtop,pxtopnew,colorpxtotal,i);
-	 byte[] pixels=new byte[imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)];
-     for(int i=0;i<pixels.length;i++){
+	 input.read(bytes, 0,bytes.length);//Reads the image into an array of bytes
+	 byte[][]pxtop = new byte[2][imgBuffer.getWidth()*((int)bytes[28]/8)];//bytes[28]=deep pixel in bmp//2 rows of pixels
+	 byte[] pxprev = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];//Row pixels
+	 byte[] pxprevnew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
+	 byte[] pxtopnew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
+     byte[] pxavenew = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
+	 byte[] pxmidnew= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];
+	 byte[] pxprevnewL = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];//Lossy
+	 byte[] pxtopnewL = new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];//Lossy
+	 byte[] pxavenewL= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];//Lossy
+	 byte[] pxmidnewL= new byte[imgBuffer.getWidth()*((int)bytes[28]/8)];//Lossy
+	 int [] colorpx=new int[256];//Frequency of colors
+	 int [] colorpxtotal=new int [256];//Frequency of total colors
+	 byte[] pixels=new byte[imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)];//Pixel array of image
+     for(int i=0;i<pixels.length;i++){//The first 54 bytes in the bmp image are information about the image
      	pixels[i]=bytes[i+54];
      }
-  /* for(int i=0;i<imgBuffer.getHeight();i++){
-    	 for(int j=0;j<imgBuffer.getWidth()*3;j++){
-    		 System.out.print(pixels[i*imgBuffer.getWidth()*3+j]+"\t");
-    	 }
-    	 System.out.println();
-     }*/
-	File file2=new File(src.substring(0, src.length()-3)+"LYM-prev");
+	File file2=new File(src.substring(0, src.length()-3)+"LYM-prev");//Intermediate file
     OutputStream out=new FileOutputStream(file2);
-    byte choose=0;
+    byte choose=0;//The conversion chosen by the algorithm
     byte[] beforepx=new byte[54];
     for(int i=0;i<54;i++){
     	beforepx[i]=bytes[i];
     }
-    out.write(beforepx);
+    out.write(beforepx);//Write to the first 54 bytes
 	for(int i=0;i<imgBuffer.getHeight();i++){
-		if(i==0){
+		if(i==0){//first row
 		for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
 			pxprev[j]=pixels[i*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
 			
 		}
-		Entropyprev=PngPrev(((int)bytes[28]/8), pxprev,pxprevnew,colorpxtotal,i);
+		Entropyprev=PngPrev(((int)bytes[28]/8), pxprev,pxprevnew,colorpxtotal,i);//In the first row, the algorithm allows conversion only by the type of the previous pixel
 		choose=1;
-		out.write(choose);
+		out.write(choose);//Write the option I have selected so that the decoding can be restored to the correct image.
 		out.write(pxprevnew);
-		for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
-			pxtop[1][j]=pixels[(i)*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
 		}
-		}
-		else{
-			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
+		else{//other rows
+			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){//A loop for filling the current row
 				pxprev[j]=pixels[i*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
 				if(pxprev[j]<0)
 			   		colorpx[pxprev[j]+256]++;
 			   	else
 			   		colorpx[pxprev[j]]++;
 			}
-			for(int j=0;j<256;j++){
-				if(colorpx[j]!=0){
-					minEntropy+=((double)colorpx[j]/pxprev.length)*((Math.log((double)colorpx[j]/pxprev.length) / Math.log(2)))*-1;
+			 for(int j=0;j<256;j++){//Entropy for row without conversions
+					if(colorpx[j]!=0||colorpxtotal[j]!=0){
+						minEntropy+=((double)(colorpx[j]+colorpxtotal[j])/((i+1)*pxprev.length))*((Math.log(((double)(colorpx[j]+colorpxtotal[j])/((i+1)*pxprev.length))) / Math.log(2)))*-1;
+					}
 				}
-			}
-			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
+			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){//A loop for filling the row above
 				pxtop[0][j]=pixels[(i)*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
 			}
-			//minEntropy=999999999;
-			if(LevelSelected==0){
-			choose=1;
-			//minEntropy=999999999;
+			choose=0;
 			Entropyprev=PngPrev(((int)bytes[28]/8), pxprev,pxprevnew,colorpxtotal,i);
 			if(Entropyprev<minEntropy){
 				choose=1;
@@ -110,9 +92,8 @@ public void Compress(String src,int LevelSelected) throws IOException{
 				choose=4;
 				minEntropy=Entropymid;
 			}
-			}
-			else{
-				minEntropy=999999999;
+			
+		if(LevelSelected!=0){//Lossy
 		   EntropyprevLossy=PngPrevLossy(((int)bytes[28]/8), pxprev, pxprevnewL,colorpxtotal,i,(100/LevelSelected));
 			if(EntropyprevLossy<minEntropy){
 				choose=5;
@@ -128,20 +109,17 @@ public void Compress(String src,int LevelSelected) throws IOException{
 				choose=7;
 				minEntropy=EntropyaveLossy;
 			}
-		//System.out.print(minEntropy+"="+i);
-		EntropymidLossy=PngMidLossy(((int)bytes[28]/8), pxtop,pxmidnewL,colorpxtotal,i,(100/LevelSelected));
+	EntropymidLossy=PngMidLossy(((int)bytes[28]/8), pxtop,pxmidnewL,colorpxtotal,i,(100/LevelSelected));
 		if(EntropymidLossy<minEntropy){
 			choose=8;
 			minEntropy=EntropymidLossy;
 		}
-			}
-		//System.out.print(minEntropy+"="+i);
-		
+			}		
 			out.write(choose);
 			if(choose==0){
 				out.write(pxprev);
 				for(int j=0;j<pxprev.length;j++){
-					colorpxtotal[pxprev[j]&0xFF]++;
+					colorpxtotal[pxprev[j]&0xFF]++;//Update the frequency of colors
 				}
 			}
 			else if(choose==1){
@@ -195,17 +173,17 @@ public void Compress(String src,int LevelSelected) throws IOException{
 			
 			
 			}	
-		if(choose>=0&&choose<5){
-			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
+		if(choose>=0&&choose<5){//Without lossy
+			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){//Fill in the row above for the next round in the loop
 				pxtop[1][j]=pixels[(i)*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
 			}
 		}
 		else if(choose==5) {
-			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
-				if(j<((int)bytes[28]/8))
-					pxtop[1][j]=pixels[(i)*imgBuffer.getWidth()*((int)bytes[28]/8)+j];
+			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){//Fill in the row above for the next round in the loop
+				if(j<((int)bytes[28]/8))//First bytes in a row//bytes[28]=deep pixel in bmp.
+					pxtop[1][j]=pixels[(i)*imgBuffer.getWidth()*((int)bytes[28]/8)+j];//unchanged
 		    	else{
-		    		pxtop[1][j]=(byte) ((pxtop[1][j-((int)bytes[28]/8)]&0xFF)+(pxprevnewL[j]&0xFF));
+		    		pxtop[1][j]=(byte) ((pxtop[1][j-((int)bytes[28]/8)]&0xFF)+(pxprevnewL[j]&0xFF));//Change by conversion
 		    	}
 			}
 		}
@@ -225,11 +203,10 @@ public void Compress(String src,int LevelSelected) throws IOException{
 		    	else{
 		    		pxtop[1][j]=(byte) (((pxtop[1][j]&0xFF)+(pxtop[1][j-((int)bytes[28]/8)]&0xFF))/2+(pxavenewL[j]&0xFF));
 		    	}
-				//System.out.println((byte) (((int)pxtop[1][j]+(int)pxtop[1][j-3])/2+(int)pxavenewL[j]));
 			}
 		}
 		else if(choose==8){
-			byte[] temppx=new byte[pxtop[1].length];
+			byte[] temppx=new byte[pxtop[1].length];//Temp that saves the pixel row above
 			for(int k=0;k<temppx.length;k++)
 				temppx[k]=pxtop[1][k];
 			for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
@@ -241,22 +218,22 @@ public void Compress(String src,int LevelSelected) throws IOException{
 			}
 		}
 		
-		//minEntropy=0;
-		for(int j=0;j<256;j++){
+		minEntropy=0;//reset
+		for(int j=0;j<256;j++){//reset
 			colorpx[j]=0;
 		}
 	}
-	byte[] afterpx=new byte[bytes.length-54-imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)];
+	byte[] afterpx=new byte[bytes.length-54-imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)];//Bytes are at the end of the image after array pixels
 	for(int i=imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)+54;i<bytes.length;i++){
 		afterpx[i-(imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)+54)]=bytes[i];
 	}
 	out.write(afterpx);
-	HufmannEncoderDecoder x=new HufmannEncoderDecoder();
-	String[] s=new String[2];
-	s[0]=src.substring(0, src.length()-3)+"LYM-prev";
-	String[] g=new String[2];
-	g[0]=src.substring(0, src.length()-3)+"LYM";
-	x.CompressWithArray(s,g);
+	HufmannEncoderDecoder Huffmann=new HufmannEncoderDecoder();
+	String[] Address=new String[2];
+	Address[0]=src.substring(0, src.length()-3)+"LYM-prev";
+	String[] AddressCompressed=new String[2];
+	AddressCompressed[0]=src.substring(0, src.length()-3)+"LYM";//Final LYM file
+	Huffmann.CompressWithArray(Address,AddressCompressed);
 	out.close();
 	file2.delete();
 	input.close();
@@ -264,27 +241,25 @@ public void Compress(String src,int LevelSelected) throws IOException{
 public double PngMidLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtotal,int k,int size) throws IOException{
 	int[] colorpx=new int[256];
 	 double Entropy=0;
-	 byte x=0;
-	 int count=0;
+	 byte pxprev=0;//The previous pixel with a lossy
+	 int count=0;//The number of pixels lost
 	 for(int j=0;j<deep;j++){
 	for(int i=0;i<newpx.length;i=i+deep){
-		if(i<deep){
+		if(i<deep){//The first pixels in a row
 			newpx[i+j]=bytes[0][i+j];
-			x=bytes[0][i+j];
+			pxprev=bytes[0][i+j];
 		}else{
-			if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF)))<size&&((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF)))>-size){
-		    newpx[i+j]=(byte)((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF)));
-		    x=bytes[0][i+j];
+			if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF)))<size&&((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF)))>-size){//If the difference in the range of size
+		    newpx[i+j]=(byte)((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF)));
+		    pxprev=bytes[0][i+j];
 			}
-			else if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF)))<size){
-				newpx[i+j]=(byte)-size;
-				x=(byte)(((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF))-(size));
-				//if((bytes[0][i+j]&0xFF)-x>50||(bytes[0][i+j]&0xFF)-x<-50)
+			else if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF)))<size){
+				newpx[i+j]=(byte)-size;//The value is most similar to a pixel
+				pxprev=(byte)(((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF))-(size));
 				  count++;
 			}else{
-				newpx[i+j]=(byte)+size;
-				x=(byte)(((bytes[1][i+j]&0xFF)+(x&0xFF)-(bytes[1][i+j-deep]&0xFF))+(size));
-				//if((bytes[0][i+j]&0xFF)-x>50||(bytes[0][i+j]&0xFF)-x<-50)
+				newpx[i+j]=(byte)size;//The value is most similar to a pixel
+				pxprev=(byte)(((bytes[1][i+j]&0xFF)+(pxprev&0xFF)-(bytes[1][i+j-deep]&0xFF))+(size));
 				   count++;
 			}
 		}
@@ -294,24 +269,20 @@ public double PngMidLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtot
    		colorpx[newpx[i]]++;
 	}
 	 }
-	 for(int i=0;i<256;i++){
+	 for(int i=0;i<256;i++){//Entropy calculation
 			if(colorpx[i]!=0||colorpxtotal[i]!=0){
 				Entropy+=((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))*((Math.log(((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))) / Math.log(2)))*-1;
 			}
 		}
-	 /*f(k==144)
-	 System.out.print(count+" ");*/
-	/*if(count<newpx.length*0.01&&size>10)
-		PngMidLossy(src,bytes,newpx,colorpxtotal,k,size-10);*/
-	//else 
+	
 	 if(size==100){
-		 if(count>newpx.length*0.1){
+		 if(count>newpx.length*0.1){//Check if the loss is not too large
 				 Entropy=999999998;
 			}
-		 else{
-			 if(count>newpx.length*0.2){
+	 else{
+		 if(count>newpx.length*0.2){//Check if the loss is not too large
 					 Entropy=999999998;
-				}
+			}
 		 }
 		 }
 	return Entropy;
@@ -321,25 +292,25 @@ public double PngMidLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtot
 public double PngAveLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtotal,int k,int size) throws IOException{
 	int[] colorpx=new int[256];
 	 double Entropy=0;
-	 byte x=0;
+	 byte pxprev=0;//The previous pixel with a lossy
 	 int count=0;
 	 for(int j=0;j<deep;j++){
 	for(int i=0;i<newpx.length;i=i+deep){
 		if(i<deep){
 			newpx[i+j]=bytes[0][i+j];
-			x=bytes[0][i+j];
+			pxprev=bytes[0][i+j];
 		}else{
-			if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(x&0xFF))/2)<size&&((bytes[0][i+j]&0xFF-(bytes[1][i+j]&0xFF+(x&0xFF))/2)>-size)){
-				newpx[i+j]=(byte)((bytes[0][i+j]&0xFF)-(((bytes[1][i+j]&0xFF)+(x&0xFF))/2));
-				x=bytes[0][i+j];
+			if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF)+(pxprev&0xFF))/2)<size&&((bytes[0][i+j]&0xFF-(bytes[1][i+j]&0xFF+(pxprev&0xFF))/2)>-size)){
+				newpx[i+j]=(byte)((bytes[0][i+j]&0xFF)-(((bytes[1][i+j]&0xFF)+(pxprev&0xFF))/2));
+				pxprev=bytes[0][i+j];
 			}
-			else if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF+(x&0xFF))/2))<size){
+			else if(((bytes[0][i+j]&0xFF)-((bytes[1][i+j]&0xFF+(pxprev&0xFF))/2))<size){
 				newpx[i+j]=(byte)-size;
-				x=(byte)(((x&0xFF)+(bytes[1][i+j]&0xFF))/2-(size));
+				pxprev=(byte)(((pxprev&0xFF)+(bytes[1][i+j]&0xFF))/2-(size));
 				count++;
 			}else{
 				newpx[i+j]=(byte)+size;
-				x=(byte)(((x&0xFF)+(bytes[1][i+j]&0xFF))/2+(size));
+				pxprev=(byte)(((pxprev&0xFF)+(bytes[1][i+j]&0xFF))/2+(size));
 				count++;
 			}	
 		}
@@ -355,8 +326,6 @@ public double PngAveLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtot
 				Entropy+=((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))*((Math.log(((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))) / Math.log(2)))*-1;
 			}
 		}
-	 /*if(count<newpx.length*0.01&&size>10)
-			PngAveLossy(src,bytes,newpx,colorpxtotal,k,size-10);*/
 	 if(size==100){
 		 if(count>newpx.length*0.1){
 				 Entropy=999999998;
@@ -401,8 +370,6 @@ public double PngTopLossy(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtot
 			Entropy+=((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))*((Math.log((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length)) / Math.log(2)))*-1;
 		}
 	}
-	/*if(count<newpx.length*0.01&&size>10)
-		PngTopLossy(src,bytes,newpx,colorpxtotal,k,size-10);*/
 	if(size==100){
 		 if(count>newpx.length*0.1){
 				 Entropy=999999998;
@@ -455,8 +422,6 @@ public double PngPrevLossy(int deep,byte[] bytes,byte[] newpx,int[] colorpxtotal
 				Entropy+=((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length))*((Math.log((double)(colorpx[i]+colorpxtotal[i])/((k+1)*newpx.length)) / Math.log(2)))*-1;
 			}
 		}
-	 /*if(count<newpx.length*0.01&&size>10)
-			PngPrevLossy(src,bytes,newpx,colorpxtotal,k,size-10);*/
 	 if(size==100){
 	 if(count>newpx.length*0.1){
 			 Entropy=999999998;
@@ -569,48 +534,34 @@ public double PngAve(int deep,byte[][] bytes,byte [] newpx,int[] colorpxtotal,in
 }
 
 public void Decompress(String src) throws IOException{
-	HufmannEncoderDecoder x=new HufmannEncoderDecoder();
-	String [] s=new String[2];
-	s[0]=src;
-	String [] g=new String[2];
-	g[0]=src.substring(0, src.length()-3)+"LYMM-prev";
-	x.Decompress(s,g);
+	HufmannEncoderDecoder Huffmann=new HufmannEncoderDecoder();
+	String [] Address=new String[2];
+	Address[0]=src;
+	String [] AddressCompressed=new String[2];
+	AddressCompressed[0]=src.substring(0, src.length()-3)+"LYMM-prev";
+	byte[] bytes=Huffmann.DecompressWithArray(Address,AddressCompressed);
 	BufferedImage imgBuffer = ImageIO.read(new File(src.substring(0, src.length()-3)+"LYMM-prev"));
-	File file=new File(src.substring(0, src.length()-3)+"LYMM-prev");
-	 InputStream input = new FileInputStream(file);
-	 byte[] bytes=new byte[(int) file.length()];
-	 input.read(bytes, 0,bytes.length);
 	 byte[][] pix=new byte[imgBuffer.getHeight()][imgBuffer.getWidth()*((int)bytes[28]/8)];
 	 byte[] beforpx=new byte[54];
-	 input.close();
+	 File file=new File(src.substring(0, src.length()-3)+"LYMM-prev");
 	 file.delete();
-	 File file2=new File(src.substring(0, src.length()-4)+"-LYM.bmp");
-	    OutputStream out=new FileOutputStream(file2);
-	 for(int i=0;i<54;i++){
+	 file=new File(src.substring(0, src.length()-4)+"-LYM.bmp");
+	 OutputStream out=new FileOutputStream(file);
+	 for(int i=0;i<54;i++){//54 first bytes 
 		 beforpx[i]=bytes[i];
 	 }
 	 out.write(beforpx);
-	 byte[] choose=new byte[imgBuffer.getHeight()];
+	 byte[] choose=new byte[imgBuffer.getHeight()];//Selection for each row
 	 for(int i=0;i<imgBuffer.getHeight();i++){
 		 choose[i]=bytes[i*imgBuffer.getWidth()*((int)bytes[28]/8)+54+i];
 		 for(int j=0;j<imgBuffer.getWidth()*((int)bytes[28]/8);j++){
-			 pix[i][j]=bytes[i*imgBuffer.getWidth()*((int)bytes[28]/8)+j+i+54+1];
+			 pix[i][j]=bytes[i*imgBuffer.getWidth()*((int)bytes[28]/8)+j+i+55];//The pixel matrix of the image
 		 }
 	 }
-	  /*  for(int i=0;i<imgBuffer.getHeight();i++){
-		 for(int j=0;j<imgBuffer.getWidth()*3;j++){
-			 System.out.print(pix[i][j]+"\t ");
-		 }
-		 System.out.println();
-
-		 }*/
-	 
-	 byte[][] realpix=new byte[imgBuffer.getHeight()][imgBuffer.getWidth()*((int)bytes[28]/8)];
-	 boolean f=true;
-	 byte ff=0;
+	 byte[][] realpix=new byte[imgBuffer.getHeight()][imgBuffer.getWidth()*((int)bytes[28]/8)];//The real pixel matrix of the image
 	 for(int i=0;i<pix.length;i++){
 		 for(int j=0;j<pix[0].length;j++){
-			 if(j<((int)bytes[28]/8)){
+			 if(j<((int)bytes[28]/8)){//first row pixels
 				 realpix[i][j]=pix[i][j];
 			 }
 			 else{
@@ -633,24 +584,14 @@ public void Decompress(String src) throws IOException{
 		 }
 	 }
 	
-	int c=0;
+	int index=0;
 	byte[] writepix=new byte[imgBuffer.getHeight()*imgBuffer.getWidth()*((int)bytes[28]/8)];
 	 for(int i=0;i<pix.length;i++){
 		 for(int j=0;j<pix[0].length;j++){
-			 writepix[c]=realpix[i][j];
-			 c++;
+			 writepix[index]=realpix[i][j];
+			 index++;
+		  }
 		 }
-		 
-		 }
-	/*for(int i=0;i<imgBuffer.getHeight();i++){
-    	 for(int j=0;j<imgBuffer.getWidth()*3;j++){
-			 System.out.print(realpix[i][j]+"\t");
-		 }
-		 System.out.println();
-	 }
-for(int i=0;i<choose.length;i++){
-		 if(choose[i]<5)
-		 System.out.print(" "+choose[i]+"="+i);	 }*/
 	 out.write(writepix);
 	 byte[] afterpx=new byte[bytes.length-54-imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)-imgBuffer.getHeight()];
 		for(int i=imgBuffer.getWidth()*imgBuffer.getHeight()*((int)bytes[28]/8)+54+imgBuffer.getHeight();i<bytes.length;i++){
